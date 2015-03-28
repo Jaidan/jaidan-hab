@@ -16,6 +16,7 @@ void setup() {
   Serial.begin(SERIAL_BAUD);
   delay(10)
   RadioNode::setupRadio();
+  RadioNode::registerNode();
   radio = RadioNode::getRadio();
 }
 
@@ -32,12 +33,12 @@ void loop() {
 void switchAction(int state)
 {
   enableLight = !enableLight;
-  byte[RF69_MAX_DATA_LEN] data;
+  uint8_t[RF69_MAX_DATA_LEN] data;
   getPacket(data);
-  RadioNode::sendData()
+  RadioNode::sendData(data)
 }
 
-void getPacket(byte *buff)
+void getPacket(uint8_t *buff)
 {
   RadioHeader header = (RadioHeader) { NODEID, millis(), LIGHT_STATUS };
   memcpy(buff, &header, HEADER);
