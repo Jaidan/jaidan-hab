@@ -59,10 +59,13 @@ void loop()
     char[64] topic;
 
     RadioNode::readRadio(&header, value);
-    getTopicBase(topic, header.nodeId);
+    getTopicBase(topic, header.nodeId - 1);
     switch header.packetType {
+      case REGISTRATION:
+        handleRegistration(header, (Registration*) value);
+        break;
       case LIGHT_STATUS:
-        lightStatusChange(header, (lightStatus*) value);
+        lightStatusChange(header, (LightStatus*) value);
         break;
     }
   }
@@ -98,7 +101,7 @@ void getTopicBase(char *buff, int index)
 
 void handleRegistration(RadioHeader header, Registration registration) 
 {
-  int address = TOPIC_LENGTH * header.nodeId;
+  int address = TOPIC_LENGTH * (header.nodeId - 1);
   if (!addressIsUsed()) {
     for (int i = 0; i < TOPIC_LENGTH; i++, address++) {
       EEPROM.write(address, registration.topic[i]);
@@ -122,7 +125,7 @@ void addressIsUsed(int address)
 void lightStatus(RadioHeader header, LightStatus lStatus)
 {
   char[TOPIC_LENGTH] topic;
-  getTopicBase(topic, header.nodeId);
+  getTopicBase(topic, header.nodeId - 1);
   client.publish(topic, (char*)lstatus.status);
 }
 
