@@ -106,14 +106,21 @@ void handleRegistration(RadioHeader header, Registration registration)
     for (int i = 0; i < TOPIC_LENGTH; i++, address++) {
       EEPROM.write(address, registration.topic[i]);
     }
+    client.subscribe(registartion.topic);
+    for (int i = 0; i < registration.commandCount; i++) {
+      // Subscribe to command topics
+      String topic = String(registration.topic);
+      topic +=  String(registration.commands[i]);
+      client.subscribe(topic);
+    }
   } else {
     Serial.writeln(F("DUPLICATE REGISTRATION DETECTED"));
+  }
 }
 
 void addressIsUsed(int address)
 {
-  for (int i = 0; i < TOPIC_LENGTH; i++, address++)
-  {
+  for (int i = 0; i < TOPIC_LENGTH; i++, address++) {
     uint8_t val = EEPROM.read(address);
     if (val != 0xFF) {
       return true;
