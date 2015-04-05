@@ -97,9 +97,12 @@ void handleRegistration(RadioHeader header, char* topic)
 {
   Registration reg = { header.id, topic };
   ts.writeRegistration(header, reg);
-  client.subscribe(registration.topic);
+  char subscription[TOPIC_LENGTH + 2];
+  strcpy(subscription, registration.topic);
+  strcat(subscription, "/*");
+  client.subscribe(subscription);
   for (int i = 0; i < ; i++) {
-    char[TOPIC_LENGTH + LCOMMAND + 1] topic;
+    char[TOPIC_LENGTH + LCOMMAND] topic;
     char command[LCOMMAND] = {0};
     for (i = 0; i < LCOMMAND; i++) {
       strcpy_P(command, commands[i]);
