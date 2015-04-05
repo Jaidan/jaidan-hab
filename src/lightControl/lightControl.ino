@@ -1,22 +1,23 @@
 #include "../common/secure.h"
 #include "config.h"
-#include "../common/defines.h"
+#include "defines.h"
 
 #include <RFM69.h>
 #include <SPI.h>
 #include "radioNode.h"
 #include "debounced.h"
 
-Debounced lightSwitch = Debounced(4, &switchAction);
-bool enableLight = RELAY_OFF;
 const int HEADER = sizeof(RadioHeader);
 RFM69 radio;
+
+SwitchedToggleControl[] = {}; // customize for each node
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
   delay(10)
   RadioNode::setupRadio();
-  RadioNode::registerNode();
+  // TODO replace with sensor registrations
+  //RadioNode::registerNode();
   radio = RadioNode::getRadio();
 }
 

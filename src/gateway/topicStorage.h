@@ -20,6 +20,9 @@ class TopicStorage
         void writeRegistration(uint8_t index, RegistrationRequest registration);
         bool indexIsUsed(uint8_t index);
     private:
+        // Values stored as 2 nibbles.  First nibble is the nodeid, second 
+        // nibble is the sensorid.  NodeId 15 (F) is reserved (gateway).  
+        // TODO possible expansion to uint16_t to support many more nodes and sensors
         uint8_t eepromMap[MAX_TOPICS] = {0}; 
         int8_t indexOf(uint8_t id);
         uint16_t makeAddress(uint8_t index);
