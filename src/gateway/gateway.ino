@@ -12,6 +12,7 @@
 #include "config.h"
 #include "../common/defines.h"
 #include <EEPROM.h>
+#include <avr/pgmspace.h>
 
 #include <RFM69.h>
 #include <SPI.h>
@@ -21,6 +22,7 @@
 #include "topicStorage.h"
 #include "controls.h"
 
+#define LCOMMAND 10
 
 uint8_t mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED }; // get real mac
 uint8_t server[] = { 192, 168, 0, 1 };
@@ -28,15 +30,11 @@ uint8_t ip[4];
 
 const uint8_t HEADER = sizeof(RadioHeader);
 
-const PROGMEM char commands[][9] = {
+const PROGMEM char commands[][LCOMMAND] = {
   { "state" },
   { "set" },
   { "timestamp" },
 }
-
-// Values stored as 2 nibbles.  First nibble is the nodeid, second 
-// nibble is the sensorid.  NodeId 15 (F) is reserved (gateway).  
-// TODO possible expansion to uint16_t to support many more nodes and sensors
 
 RFM69 radio;
 EthernetClient ethClient;
@@ -101,9 +99,14 @@ void handleRegistration(RadioHeader header, char* topic)
   ts.writeRegistration(header, reg);
   client.subscribe(registration.topic);
   for (int i = 0; i < ; i++) {
-    char[TOPIC_LENGTH] topic;
+    char[TOPIC_LENGTH + LCOMMAND + 1] topic;
+    char command[LCOMMAND] = {0};
+    for (i = 0; i < LCOMMAND; i++) {
+      strcpy_P(command, commands[i]);
+    }
     strcpy(topic, registration.topic);
-    strcat(topic, commands[i]);
+    strcat(topic, "/");
+    strcat(topic, command);
     client.subscribe(topic);
   } else {
     Serial.println(F("Unable to register, out of space"));
