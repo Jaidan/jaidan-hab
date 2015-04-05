@@ -1,3 +1,13 @@
+/* TODO
+   Expland list of command verbs:
+   1. State
+   2. Set
+   3. Timestamp
+   ...
+
+   Consider sacrificing another byte of topic space for sensor type definition
+   that can carry applicaple comman details
+*/
 #include "../common/secure.h"
 #include "config.h"
 #include "../common/defines.h"
@@ -8,24 +18,39 @@
 #include <PubSubClient.h>
 #include <Ethernet.h>
 #include "radioNode.h"
+#include "topicStorage.h"
+#include "controls.h"
 
-#define MAX_NODES 16
-#define TOPIC_LENGTH
 
 uint8_t mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED }; // get real mac
 uint8_t server[] = { 192, 168, 0, 1 };
-uint8_t[4] ip;
+uint8_t ip[4];
 
 const uint8_t HEADER = sizeof(RadioHeader);
-uint8_t knownNodes = 0;
-uint8_t[MAX_NODES] nodes;
+
+const PROGMEM char commands[][9] = {
+  { "state" },
+  { "set" },
+  { "timestamp" },
+}
+
+// Values stored as 2 nibbles.  First nibble is the nodeid, second 
+// nibble is the sensorid.  NodeId 15 (F) is reserved (gateway).  
+// TODO possible expansion to uint16_t to support many more nodes and sensors
 
 RFM69 radio;
 EthernetClient ethClient;
 PubSubClient client(server, 1883, callback, ethClient);
+TopicStorage ts;
 
 void callback(char* topic, byte* payload, unsigned int length) {
-    // handle message arrived
+  // split on `/` 
+  // join all but last
+  // the last is the command
+  // Search for topic and get an id
+  // send RF message based on topic, command, and id
+  // id is 2 nibbles!
+  // how to deal with messages to the base topic...
 }
 
 void setup()
@@ -39,7 +64,7 @@ void setup()
     while(true);
   }
   ip = Ethernet.localIP();
-  loadNodes();
+  ts = TopicStorage();
 }
 
 void loop()
@@ -56,83 +81,44 @@ void loop()
   if (radio.receiveDone()) {
     RadioHeader header;
     char[RF69_MAX_DATA_LEN - HEADER] value;
-    char[64] topic;
 
     RadioNode::readRadio(&header, value);
-    getTopicBase(topic, header.nodeId - 1);
     switch header.packetType {
       case REGISTRATION:
-        handleRegistration(header, (Registration*) value);
+        handleRegistration(header, value);
         break;
       case LIGHT_STATUS:
         lightStatusChange(header, (LightStatus*) value);
         break;
     }
   }
+  client.loop();
 }
 
-void loadNodes()
-  /*
-     All addresses in EEPROM should be initialized to 0xFF.
-     If we read the start of a topic and see a value other than 0xFF
-     then we can infer there is a topic written there.
-  */
+void handleRegistration(RadioHeader header, char* topic) 
 {
-  for (int i = 0; i < MAX_NODES; i++) {
-    uint8_t address = i * TOPIC_LENGTH;
-    if (addressIsUsed()) {
-      knownNodes++;
-    }
-  }
-}
-
-void getTopicBase(char *buff, int index)
-{
-  /*
-     The topic are 64 bytes each max occupying 2 pages each.
-     the start address is based on the index being accessed
-     and the data is read into the provided buffer
-  */
-  int address = TOPIC_LENGTH * index; 
-  for (int i = 0; i < TOPIC_LENGTH; i++, adress++) {
-    buff[i] = EEPROM.read(address);
-  }
-}
-
-void handleRegistration(RadioHeader header, Registration registration) 
-{
-  int address = TOPIC_LENGTH * (header.nodeId - 1);
-  if (!addressIsUsed()) {
-    for (int i = 0; i < TOPIC_LENGTH; i++, address++) {
-      EEPROM.write(address, registration.topic[i]);
-    }
-    client.subscribe(registartion.topic);
-    for (int i = 0; i < registration.commandCount; i++) {
-      // Subscribe to command topics
-      String topic = String(registration.topic);
-      topic +=  String(registration.commands[i]);
-      client.subscribe(topic);
-    }
+  Registration reg = { header.id, topic };
+  ts.writeRegistration(header, reg);
+  client.subscribe(registration.topic);
+  for (int i = 0; i < ; i++) {
+    char[TOPIC_LENGTH] topic;
+    strcpy(topic, registration.topic);
+    strcat(topic, commands[i]);
+    client.subscribe(topic);
   } else {
-    Serial.writeln(F("DUPLICATE REGISTRATION DETECTED"));
+    Serial.println(F("Unable to register, out of space"));
   }
 }
 
-void addressIsUsed(int address)
+void lightStatusChange(RadioHeader header, LightStatus lStatus)
 {
-  for (int i = 0; i < TOPIC_LENGTH; i++, address++) {
-    uint8_t val = EEPROM.read(address);
-    if (val != 0xFF) {
-      return true;
-    }
-  }
-  return false;
+  // TODO WIP
+  char[TOPIC_LENGTH + 6] topic;
+  bool result = ts.getTopicBase(topic, header.id);
+  if result
+    //TODO concat topic and command
+    //topic
+    client.publish(topic, (char*)lstatus.status);
+  else
+    Serial.println(F("Unable to locate topic!"));
 }
-
-void lightStatus(RadioHeader header, LightStatus lStatus)
-{
-  char[TOPIC_LENGTH] topic;
-  getTopicBase(topic, header.nodeId - 1);
-  client.publish(topic, (char*)lstatus.status);
-}
-
