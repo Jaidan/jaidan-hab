@@ -26,13 +26,11 @@ uint8_t mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED }; // get real mac
 uint8_t server[] = { 192, 168, 0, 1 };
 IPAddress ip;
 
-const uint8_t HEADER = sizeof(RadioHeader);
+const PROGMEM char STATE_COMMAND[] = "/state";
+const PROGMEM char SET_COMMAND[] = "/set";
+const PROGMEM char TIMESTAMP_COMMAND[] = "/timestamp";
 
-const PROGMEM char commands[][LCOMMAND] = {
-  { STATE_COMMAND },
-  { SET_COMMAND },
-  { TIMESTAMP_COMMAND },
-};
+const char * const PROGMEM commands[] = { STATE_COMMAND, SET_COMMAND, TIMESTAMP_COMMAND };
 
 RFM69 radio;
 EthernetClient ethClient;
@@ -67,11 +65,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   uint8_t id = ts.fromTopicBase(baseTopic);
   // TODO switches with strings...does that work at all?
-  if (strcmp(command, STATE_COMMAND) == 0) {
+  if (strcmp_P(command, STATE_COMMAND) == 0) {
     // Do something?
-  } else if (strcmp(command, SET_COMMAND) == 0) {
+  } else if (strcmp_P(command, SET_COMMAND) == 0) {
     // Send change state via RF
-  } else if (strcmp(command, TIMESTAMP_COMMAND) == 0) {
+  } else if (strcmp_P(command, TIMESTAMP_COMMAND) == 0) {
     // Possibly add a separate timestamp request channel this one doesn't seem
     // to hae a purpose for now
   }
@@ -84,7 +82,7 @@ void setup()
   RadioNode::setupRadio(FREQUENCY, NODEID, NETWORKID, IS_RFM69HW, ENCRYPTKEY);
   radio = RadioNode::getRadio();
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
+    Serial.println(F("Failed to configure Ethernet using DHCP"));
     while(true);
   }
   ip = Ethernet.localIP();
@@ -95,7 +93,7 @@ void loop()
 {
   if (!client.connected()) {
     if (!client.connect("arduinoClient")) {
-      Serial.println("Failed to connect to MQTT server...");
+      Serial.println(F("Failed to connect to MQTT server..."));
       delay(5000);
     }
   }
@@ -104,15 +102,15 @@ void loop()
     RadioNode::executeCommand(input);
   if (radio.receiveDone()) {
     RadioHeader header;
-    char value[RF69_MAX_DATA_LEN - HEADER];
+    char value[RF69_MAX_DATA_LEN - LHEADER];
 
     RadioNode::readRadio(&header, value);
     switch (header.packetType) {
       case REGISTRATION:
         handleRegistration(header, value);
         break;
-      case LIGHT_STATUS:
-        lightStatusChange(header, *(LightStatus*) value);
+      case SWITCHEDTOGGLE_STATUS:
+        switchedToggleStatusChange(header, *(SwitchedToggle *) value);
         break;
     }
   }
@@ -134,15 +132,17 @@ void handleRegistration(RadioHeader header, char *topic)
   }
 }
 
-void lightStatusChange(RadioHeader header, LightStatus lStatus)
+void switchedToggleStatusChange(RadioHeader header, SwitchedToggle sStatus)
 {
-  // TODO WIP
-  char topic[TOPIC_LENGTH + 6];
+  /*
+   * Publish a state change caused by a SwitchedToggle being mechanically
+   * changed.  In other words; someone flipped the light switch
+  */
+  char topic[TOPIC_LENGTH + sizeof(STATE_COMMAND)];
   bool result = ts.getTopicBase(topic, header.id);
   if (result) {
-    //TODO concat topic and command
-    //topic
-    client.publish(topic, (char*)lStatus.status);
+    strcat_P(topic, STATE_COMMAND);
+    client.publish(topic, (char *)sStatus.status);
   } else {
     Serial.println(F("Unable to locate topic!"));
   }
