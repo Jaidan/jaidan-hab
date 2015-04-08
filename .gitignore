@@ -1,2 +1,4 @@
 .DS_Store
 secure.h
+defines.h
+!common/defines.h

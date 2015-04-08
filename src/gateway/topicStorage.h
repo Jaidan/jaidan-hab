@@ -2,7 +2,7 @@
 #define topicStorage_h
 
 #include "Arduino.h"
-
+#include <controls.h>
 // If this exceeds 128 bump the int8_t to int16_t
 #define MAX_TOPICS 16
 #define TS_EMPTY 0xFF
@@ -13,12 +13,13 @@ class TopicStorage
 {
     public:
         int8_t getAvailableIndex();
-        bool getTopicBase(char* buff, int16_t id);
-        uint8_t fromTopicBase(char* buff);
+        bool getTopicBase(char *buff, int16_t id);
+        uint8_t fromTopicBase(char *buff);
         Registration getRegistration(uint8_t index);
-        void writeRegistration(RegistrationRequest registration);
-        void writeRegistration(uint8_t index, RegistrationRequest registration);
+        bool writeRegistration(Registration reg);
+        void writeRegistration(uint8_t index, Registration reg);
         bool indexIsUsed(uint8_t index);
+        TopicStorage();
     private:
         // Values stored as 2 nibbles.  First nibble is the nodeid, second 
         // nibble is the sensorid.  NodeId 15 (F) is reserved (gateway).  

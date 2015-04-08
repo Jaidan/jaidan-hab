@@ -1,3 +1,2 @@
-#define FREQUENCY RF69_915MHZ
-#define NETWORKID 100
 #define NODEID 15
+#define NETWORKID 100
