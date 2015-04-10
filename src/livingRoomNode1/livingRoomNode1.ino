@@ -8,10 +8,12 @@
 #include <debounced.h>
 #include <controls.h>
 
+#define OUTDOOE_LIGHT1_ID 0
+
 RFM69 radio;
 
 const PROGMEM char outdoorLight1Topic[] = "jaidan/home/outdoors/light1";
-SwitchedToggleControl outdoorLight1 = SwitchedToggleControl(1, 2, NODEID, 0);  // Front house light
+SwitchedToggleControl outdoorLight1 = SwitchedToggleControl(1, 2, NODEID, OUTDOOR_LIGHT1_ID);  // Front house light
 
 void setup()
 {
@@ -28,5 +30,8 @@ void loop()
     RadioHeader header;
     SwitchedToggle value;
     RadioNode::readRadio(&header, (char *)&value);
+    // TODO get the sensor ID by masking out the nodeid
+    // TODO target the correct controlid
+    // TODO set the state of the control
   }
 }
