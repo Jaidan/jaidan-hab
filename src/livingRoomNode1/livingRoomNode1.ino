@@ -8,7 +8,7 @@
 #include <debounced.h>
 #include <controls.h>
 
-#define OUTDOOE_LIGHT1_ID 0
+#define OUTDOOR_LIGHT1_ID 0
 
 RFM69 radio;
 
@@ -28,10 +28,13 @@ void loop()
   outdoorLight1.loop();
   if (radio.receiveDone()) {
     RadioHeader header;
-    SwitchedToggle value;
-    RadioNode::readRadio(&header, (char *)&value);
-    // TODO get the sensor ID by masking out the nodeid
-    // TODO target the correct controlid
-    // TODO set the state of the control
+    char buff[LBODY];
+    RadioNode::readRadio(&header, buff);
+    uint8_t controlId = header.id & 0x0F;
+    switch (controlId) {
+      case OUTDOOR_LIGHT1_ID:
+        outdoorLight1.setToggleControl((*(SwitchedToggle *)&buff).status);
+        break;
+    }
   }
 }
