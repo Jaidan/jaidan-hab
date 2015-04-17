@@ -13,7 +13,7 @@
 RFM69 radio;
 
 const PROGMEM char outdoorLight1Topic[] = "jaidan/home/outdoors/light1";
-SwitchedToggleControl outdoorLight1 = SwitchedToggleControl(1, 2, NODEID, OUTDOOR_LIGHT1_ID);  // Front house light
+SwitchedToggleControl outdoorLight1 = SwitchedToggleControl(1, 3, NODEID, OUTDOOR_LIGHT1_ID);  // Front house light
 
 void setup()
 {
