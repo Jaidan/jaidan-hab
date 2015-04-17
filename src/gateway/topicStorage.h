@@ -14,7 +14,7 @@ class TopicStorage
     public:
         int8_t getAvailableIndex();
         bool getTopicBase(char *buff, int16_t id);
-        uint8_t fromTopicBase(char *buff);
+        bool fromTopicBase(char *buff, Registration *reg);
         Registration getRegistration(uint8_t index);
         bool writeRegistration(Registration reg);
         void writeRegistration(uint8_t index, Registration reg);

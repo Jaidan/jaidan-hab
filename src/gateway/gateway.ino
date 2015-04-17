@@ -63,14 +63,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
     strcpy(baseTopic, topic);
     command[0] = 0;
   }
-  uint8_t id = ts.fromTopicBase(baseTopic);
-  if (strcmp_P(command, STATE_COMMAND) == 0) {
-    // Do something?
-  } else if (strcmp_P(command, SET_COMMAND) == 0) {
-    // TODO Send change state via RF
-  } else if (strcmp_P(command, TIMESTAMP_COMMAND) == 0) {
-    // Possibly add a separate timestamp request channel this one doesn't seem
-    // to hae a purpose for now
+  Registration reg;
+  bool found = ts.fromTopicBase(baseTopic, &reg);
+  if (found) {
+    if (strcmp_P(command, STATE_COMMAND) == 0) {
+      // Do something?
+    } else if (strcmp_P(command, SET_COMMAND) == 0) {
+      // TODO Send change state via RF
+    } else if (strcmp_P(command, TIMESTAMP_COMMAND) == 0) {
+      // Possibly add a separate timestamp request channel this one doesn't seem
+      // to hae a purpose for now
+    }
   }
 }
 
@@ -127,6 +130,7 @@ void handleRegistration(RadioHeader header, char *topic)
     strcpy(subscription, reg.topic);
     strcat(subscription, "/*");
   } else {
+    // TODO Consider sending these as a topic for fault logging...
     Serial.println(F("Unable to register, out of space"));
   }
 }

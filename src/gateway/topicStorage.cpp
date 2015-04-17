@@ -44,19 +44,18 @@ bool TopicStorage::getTopicBase(char* buff, int id)
     return true;
 }
 
-uint8_t TopicStorage::fromTopicBase(char* buff)
+bool TopicStorage::fromTopicBase(char* buff, Registration *reg)
 {
     /*
      Given a topic base find the matching node and control id
     */
     for (uint8_t i; i < MAX_TOPICS; i++) {
-        Registration reg = getRegistration(i);
-        if (strcmp(buff, reg.topic) == 0) {
-            return reg.id;
+        *reg = getRegistration(i);
+        if (strcmp(buff, reg->topic) == 0) {
+            return true;
         }
     }
-    // impossible id when not found;
-    return TS_EMPTY;
+    return false;
 }
 
 int8_t TopicStorage::indexOf(uint8_t id)
