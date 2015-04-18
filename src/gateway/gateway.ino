@@ -37,7 +37,7 @@ EthernetClient ethClient;
 PubSubClient client(server, 1883, callback, ethClient);
 TopicStorage ts;
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char *topic, byte *payload, unsigned int length) {
   // Search for topic and get an id
   // send RF message based on topic, command, and id
   // id is 2 nibbles!
@@ -69,12 +69,25 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (strcmp_P(command, STATE_COMMAND) == 0) {
       // Do something?
     } else if (strcmp_P(command, SET_COMMAND) == 0) {
-      // TODO Send change state via RF
+      RadioHeader header = { reg.id, reg.controlType };
+      switch(header.controlType) {
+        case SWITCHEDTOGGLE_STATUS:
+          setStateSwitchedToggle(&header, payload, length);
+          break;
+      }
+      setStateSwitchedToggle(&header, payload, length);
     } else if (strcmp_P(command, TIMESTAMP_COMMAND) == 0) {
       // Possibly add a separate timestamp request channel this one doesn't seem
       // to hae a purpose for now
     }
   }
+}
+
+void setStateSwitchedToggle(RadioHeader *header, byte *payload, unsigned int length)
+{
+  // Skip memcpy since it's only one byte
+  SwitchedToggle body = (SwitchedToggle) { (bool)*payload };
+  RadioNode::sendData((const RadioHeader *)header, (const void *)&body, sizeof(body));
 }
 
 void setup()
