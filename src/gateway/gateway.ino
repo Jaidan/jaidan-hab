@@ -78,7 +78,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
       setStateSwitchedToggle(&header, payload, length);
     } else if (strcmp_P(command, TIMESTAMP_COMMAND) == 0) {
       // Possibly add a separate timestamp request channel this one doesn't seem
-      // to hae a purpose for now
+      // to have a purpose for now
     }
   }
 }
