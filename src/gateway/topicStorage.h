@@ -19,6 +19,7 @@ class TopicStorage
         bool writeRegistration(Registration reg);
         void writeRegistration(uint8_t index, Registration reg);
         bool indexIsUsed(uint8_t index);
+        void printAllRegistrations();
         TopicStorage();
     private:
         // Values stored as 2 nibbles.  First nibble is the nodeid, second 

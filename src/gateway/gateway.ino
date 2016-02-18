@@ -21,12 +21,15 @@
 #include "topicStorage.h"
 
 #define LCOMMAND 11
+#define TEST_MODE 1
+
+#define PRINT_REGISTRATIONS 'p'
 
 uint8_t mac[] = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED }; // get real mac
-uint8_t server[] = { 192, 168, 0, 1 };
+uint8_t server[] = { 192, 168, 0, 181 };
 IPAddress ip;
 
-const PROGMEM char STATE_COMMAND[] = "/state";
+const PROGMEM char STATE_COMMAND[] = "/status";
 const PROGMEM char SET_COMMAND[] = "/set";
 const PROGMEM char TIMESTAMP_COMMAND[] = "/timestamp";
 
@@ -70,7 +73,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
       // Do something?
     } else if (strcmp_P(command, SET_COMMAND) == 0) {
       RadioHeader header = { reg.id, reg.controlType };
-      switch(header.controlType) {
+      switch(header.packetType) {
         case SWITCHEDTOGGLE_STATUS:
           setStateSwitchedToggle(&header, payload, length);
           break;
@@ -94,9 +97,10 @@ void setup()
 {
   Serial.begin(SERIAL_BAUD);
   delay(10);
+  Serial.println(F("Rebooted"));
   RadioNode::setupRadio(FREQUENCY, NODEID, NETWORKID, IS_RFM69HW, ENCRYPTKEY);
   radio = RadioNode::getRadio();
-  if (Ethernet.begin(mac) == 0) {
+  if (Ethernet.begin(mac) == 0 && !TEST_MODE) {
     Serial.println(F("Failed to configure Ethernet using DHCP"));
     while(true);
   }
@@ -106,7 +110,7 @@ void setup()
 
 void loop()
 {
-  if (!client.connected()) {
+  if (!client.connected() && !TEST_MODE) {
     if (!client.connect("arduinoClient")) {
       Serial.println(F("Failed to connect to MQTT server..."));
       delay(5000);
@@ -115,6 +119,9 @@ void loop()
   char input = Serial.read();
   if (Serial.available() > 0)
     RadioNode::executeCommand(input);
+    if (!RadioNode::executeCommand(input)) {
+      executeCommand(input);
+    }
   if (radio.receiveDone()) {
     RadioHeader header;
     char value[RF69_MAX_DATA_LEN - LHEADER];
@@ -162,4 +169,13 @@ void switchedToggleStatusChange(RadioHeader header, SwitchedToggle sStatus)
   } else {
     Serial.println(F("Unable to locate topic!"));
   }
+}
+
+void executeCommand(char input) 
+{
+    switch (input) {
+      case PRINT_REGISTRATIONS:
+        ts.printAllRegistrations();
+        break;
+    }
 }

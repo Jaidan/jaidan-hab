@@ -117,3 +117,12 @@ uint16_t TopicStorage::makeAddress(uint8_t index)
 {
     return (uint16_t) index * LREGISTRATION;
 }
+
+void TopicStorage::printAllRegistrations()
+{
+    for (int8_t i = 0; i < MAX_TOPICS; i++) {
+        Registration reg = getRegistration(i);
+        Serial.println(reg.topic);
+    }
+}
+

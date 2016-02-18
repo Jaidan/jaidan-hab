@@ -19,8 +19,15 @@ void setup()
 {
   Serial.begin(SERIAL_BAUD);
   delay(10);
-  RadioNode::setupRadio(FREQUENCY, NODEID, NETWORKID, IS_RFM69HW, ENCRYPTKEY);
+  RadioNode::setupRadio(
+    FREQUENCY,
+    NODEID,
+    NETWORKID,
+    IS_RFM69HW,
+    ENCRYPTKEY
+  );
   radio = RadioNode::getRadio();
+  outdoorLight1.registerControl();
 }
 
 void loop()
@@ -41,3 +48,4 @@ void loop()
     }
   }
 }
+
